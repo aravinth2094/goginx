@@ -1,0 +1,5 @@
+dist/
+*.pem
+*.log
+goginx.json
+.DS_Store
