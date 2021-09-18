@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/aravinth2094/goginx/types"
@@ -46,4 +47,13 @@ func addCorsHeaders(route types.Route, c *gin.Context) {
 	if route.Cors.Vary != "" {
 		c.Writer.Header().Add("Access-Control-Allow-Vary", route.Cors.Vary)
 	}
+}
+
+func cidrRangeContains(cidrRange string, checkIP string) bool {
+	_, network, err := net.ParseCIDR(cidrRange)
+	if err != nil {
+		return cidrRange == checkIP
+	}
+	ip := net.ParseIP(checkIP)
+	return network.Contains(ip)
 }
