@@ -27,7 +27,8 @@ Sample goginx.json file
     "key" : "key.pem",
     "log" : "goginx.log",
     "whitelist": [
-        "127.0.0.1"
+        "127.0.0.1",
+        "192.168.1.0/24"
     ],
     "routes" : [
         {
