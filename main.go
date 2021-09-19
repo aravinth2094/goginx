@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/aravinth2094/goginx/config"
@@ -46,6 +47,10 @@ func main() {
 	r.HandleMethodNotAllowed = true
 
 	for _, route := range conf.Routes {
+		if route.ForwardUrl[:7] == "file://" {
+			r.StaticFS(route.Path, http.Dir(route.ForwardUrl[7:]))
+			continue
+		}
 		for _, method := range route.AllowedMethods {
 			r.Handle(method, route.Path, handler.GetCoreHandler(route, method))
 		}

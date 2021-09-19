@@ -51,6 +51,11 @@ Sample goginx.json file
                 "cacheControl": "no-cache",
                 "vary": "Accept-Encoding"
             }
+        },
+        {
+            "path" : "/downloads",
+            "forwardUrl" : "file://dist"
+
         }
     ]
 }
