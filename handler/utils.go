@@ -52,7 +52,7 @@ func addCorsHeaders(route types.Route, c *gin.Context) {
 func cidrRangeContains(cidrRange string, checkIP string) bool {
 	_, network, err := net.ParseCIDR(cidrRange)
 	if err != nil {
-		return cidrRange == checkIP
+		return false
 	}
 	ip := net.ParseIP(checkIP)
 	return network.Contains(ip)

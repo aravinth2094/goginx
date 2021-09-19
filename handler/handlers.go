@@ -58,12 +58,16 @@ func GetCoreHandler(route types.Route, method string) gin.HandlerFunc {
 }
 
 func GetWhitelistHandler(conf types.Configuration) gin.HandlerFunc {
+	whiteList := make(map[string]bool)
+	for _, ip := range conf.WhiteList {
+		whiteList[ip] = true
+	}
 	return func(c *gin.Context) {
 		for _, ip := range conf.WhiteList {
-			if !cidrRangeContains(ip, c.ClientIP()) {
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": c.ClientIP() + " is not allowed"})
+			if whiteList[c.ClientIP()] || cidrRangeContains(ip, c.ClientIP()) {
 				return
 			}
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": c.ClientIP() + " is not allowed"})
 		}
 	}
 }
