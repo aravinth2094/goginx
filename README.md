@@ -55,7 +55,6 @@ Sample goginx.json file
         {
             "path" : "/downloads",
             "forwardUrl" : "file://dist"
-
         }
     ]
 }
