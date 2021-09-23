@@ -19,7 +19,21 @@ or if you have ```goginx.json``` in the current directory
 ```shell
 goginx
 ```
-Sample goginx.json file
+
+Basic Sample goginx.json file
+```json
+{
+    "routes" : [
+        {
+            "path" : "/search",
+            "forwardUrl" : "https://httpbin.org/anything",
+            "allowedMethods": [ "GET", "POST" ]
+        }
+    ]
+}
+```
+
+Advanced Sample goginx.json file
 ```json
 {
     "listen" : ":443",
