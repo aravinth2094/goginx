@@ -30,6 +30,7 @@ Sample goginx.json file
         "127.0.0.1",
         "192.168.1.0/24"
     ],
+    "compression" : true,
     "routes" : [
         {
             "path" : "/search",
@@ -50,7 +51,9 @@ Sample goginx.json file
                 "allowedHeaders": "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
                 "cacheControl": "no-cache",
                 "vary": "Accept-Encoding"
-            }
+            },
+            "cache" : 60,
+            "timeout" : 5000
         },
         {
             "path" : "/downloads",
