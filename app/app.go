@@ -17,6 +17,7 @@ import (
 	"github.com/gin-contrib/timeout"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"github.com/penglongli/gin-metrics/ginmetrics"
 	"go.uber.org/zap"
 )
 
@@ -56,6 +57,11 @@ func StartWithConfig(conf types.Configuration) error {
 	r.Use(handler.GetLoggingHandler())
 	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(logger, true))
+	m := ginmetrics.GetMonitor()
+	m.SetMetricPath("/metrics")
+	m.SetSlowTime(10)
+	m.SetDuration([]float64{0.1, 0.3, 1.2, 5, 10})
+	m.Use(r)
 	if conf.Compression {
 		r.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
