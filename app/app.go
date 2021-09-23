@@ -71,7 +71,7 @@ func StartWithConfig(conf types.Configuration) error {
 			continue
 		}
 		for _, method := range route.AllowedMethods {
-			handlerFunction := handler.GetCoreHandler(route, method)
+			handlerFunction := handler.GetCoreHandler(conf, route, method)
 			if route.Cache > 0 {
 				if store == nil {
 					store = persistence.NewInMemoryStore(time.Minute)

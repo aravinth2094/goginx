@@ -5,20 +5,35 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/aravinth2094/goginx/types"
 	"github.com/gin-gonic/gin"
+	roundrobin "github.com/hlts2/round-robin"
 )
 
-func GetCoreHandler(route types.Route, method string) gin.HandlerFunc {
+func GetCoreHandler(conf types.Configuration, route types.Route, method string) gin.HandlerFunc {
+	urls := make([]*url.URL, 0)
+	upstreams := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]
+	if len(upstreams) == 0 {
+		urls = append(urls, &url.URL{
+			Host: route.ForwardUrl,
+		})
+	}
+	for _, upstream := range upstreams {
+		urls = append(urls, &url.URL{
+			Host: upstream + route.ForwardUrl[strings.Index(route.ForwardUrl, ":"):],
+		})
+	}
+	rr, _ := roundrobin.New(urls...)
 	return func(c *gin.Context) {
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if checkAndSendError(c, err) {
 			return
 		}
-		url := strings.TrimRight(route.ForwardUrl, "/")
+		url := strings.TrimRight(rr.Next().Host, "/")
 		if route.AppendPath {
 			url += c.Request.URL.Path
 		}

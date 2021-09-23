@@ -24,11 +24,12 @@ type Route struct {
 }
 
 type Configuration struct {
-	Listen      string   `json:"listen"`
-	Certificate string   `json:"certificate"`
-	Key         string   `json:"key"`
-	Log         string   `json:"log"`
-	WhiteList   []string `json:"whiteList"`
-	Compression bool     `json:"compression"`
-	Routes      []Route  `json:"routes"`
+	Listen      string              `json:"listen"`
+	Certificate string              `json:"certificate"`
+	Key         string              `json:"key"`
+	Log         string              `json:"log"`
+	WhiteList   []string            `json:"whiteList"`
+	Compression bool                `json:"compression"`
+	Upstreams   map[string][]string `json:"upstreams"`
+	Routes      []Route             `json:"routes"`
 }

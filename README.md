@@ -31,10 +31,15 @@ Sample goginx.json file
         "192.168.1.0/24"
     ],
     "compression" : true,
+    "upstreams" : {
+        "httpbin" : [
+            "https://httpbin.org"
+        ]
+    },
     "routes" : [
         {
             "path" : "/search",
-            "forwardUrl" : "https://httpbin.org/anything",
+            "forwardUrl" : "httpbin:/anything",
             "allowedMethods": [ "GET", "POST" ],
             "forwardIp": true,
             "appendPath": false,
