@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -24,7 +25,7 @@ func GetCoreHandler(conf types.Configuration, route types.Route, method string) 
 	}
 	for _, upstream := range upstreams {
 		urls = append(urls, &url.URL{
-			Host: upstream + route.ForwardUrl[strings.Index(route.ForwardUrl, ":"):],
+			Host: upstream + route.ForwardUrl[strings.Index(route.ForwardUrl, ":")+1:],
 		})
 	}
 	rr, _ := roundrobin.New(urls...)
@@ -37,6 +38,7 @@ func GetCoreHandler(conf types.Configuration, route types.Route, method string) 
 		if route.AppendPath {
 			url += c.Request.URL.Path
 		}
+		log.Println("Forwarding to: " + url)
 		proxyReq, err := http.NewRequest(method, url+"?"+c.Request.URL.RawQuery, bytes.NewReader(body))
 		if checkAndSendError(c, err) {
 			return
