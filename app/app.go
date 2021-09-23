@@ -6,11 +6,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aravinth2094/goginx/config"
 	"github.com/aravinth2094/goginx/handler"
 	"github.com/aravinth2094/goginx/types"
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/timeout"
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func initialize() string {
@@ -45,12 +52,18 @@ func getConfigurationFromFile(configurationFile string) types.Configuration {
 func StartWithConfig(conf types.Configuration) error {
 	initLogFile(conf)
 	r := gin.New()
-	r.Use(gin.Recovery())
+	logger, _ := zap.NewProduction()
 	r.Use(handler.GetLoggingHandler())
+	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
+	r.Use(ginzap.RecoveryWithZap(logger, true))
+	if conf.Compression {
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+	}
 	if len(conf.WhiteList) > 0 {
 		r.Use(handler.GetWhitelistHandler(conf))
 	}
 	r.HandleMethodNotAllowed = true
+	var store *persistence.InMemoryStore
 
 	for _, route := range conf.Routes {
 		if route.ForwardUrl[:7] == "file://" {
@@ -58,7 +71,20 @@ func StartWithConfig(conf types.Configuration) error {
 			continue
 		}
 		for _, method := range route.AllowedMethods {
-			r.Handle(method, route.Path, handler.GetCoreHandler(route, method))
+			handlerFunction := handler.GetCoreHandler(route, method)
+			if route.Cache > 0 {
+				if store == nil {
+					store = persistence.NewInMemoryStore(time.Minute)
+				}
+				handlerFunction = cache.CachePage(store, time.Duration(route.Cache)*time.Second, handlerFunction)
+			}
+			if route.Timeout > 0 {
+				handlerFunction = timeout.New(
+					timeout.WithTimeout(time.Duration(route.Timeout)*time.Millisecond),
+					timeout.WithHandler(handlerFunction),
+				)
+			}
+			r.Handle(method, route.Path, handlerFunction)
 		}
 	}
 

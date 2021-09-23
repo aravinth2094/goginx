@@ -19,6 +19,8 @@ type Route struct {
 	CustomHeaders  map[string]string `json:"customHeaders"`
 	SecureHeaders  bool              `json:"secureHeaders"`
 	Cors           CorsConfig        `json:"cors"`
+	Cache          int               `json:"cache"`
+	Timeout        int               `json:"timeout"`
 }
 
 type Configuration struct {
@@ -27,5 +29,6 @@ type Configuration struct {
 	Key         string   `json:"key"`
 	Log         string   `json:"log"`
 	WhiteList   []string `json:"whiteList"`
+	Compression bool     `json:"compression"`
 	Routes      []Route  `json:"routes"`
 }
