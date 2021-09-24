@@ -15,6 +15,9 @@ Run using
 ```shell
 goginx -c config.json
 ```
+```shell
+goginx -c https://<fileuploadserver.io>/config.json
+```
 or if you have ```goginx.json``` in the current directory
 ```shell
 goginx
