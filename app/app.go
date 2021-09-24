@@ -10,7 +10,6 @@ import (
 
 	"github.com/aravinth2094/goginx/config"
 	"github.com/aravinth2094/goginx/handler"
-	"github.com/aravinth2094/goginx/types"
 	"github.com/gin-contrib/cache"
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/gzip"
@@ -34,7 +33,7 @@ func initialize() string {
 	return *configFileLocation
 }
 
-func initLogFile(conf types.Configuration) {
+func initLogFile(conf handler.Configuration) {
 	logfile, err := os.OpenFile(conf.Log, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +41,7 @@ func initLogFile(conf types.Configuration) {
 	gin.DefaultWriter = io.MultiWriter(logfile)
 }
 
-func getConfigurationFromFile(configurationFile string) types.Configuration {
+func getConfigurationFromFile(configurationFile string) handler.Configuration {
 	conf, err := config.ParseConfig(configurationFile)
 	if err != nil {
 		log.Fatalf("Error parsing configuration file: %s", err)
@@ -50,11 +49,11 @@ func getConfigurationFromFile(configurationFile string) types.Configuration {
 	return conf
 }
 
-func StartWithConfig(conf types.Configuration) error {
+func StartWithConfig(conf handler.Configuration) error {
 	initLogFile(conf)
 	r := gin.New()
 	logger, _ := zap.NewProduction()
-	r.Use(handler.GetLoggingHandler())
+	r.Use(conf.GetLoggingHandler())
 	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(logger, true))
 	m := ginmetrics.GetMonitor()
@@ -66,7 +65,7 @@ func StartWithConfig(conf types.Configuration) error {
 		r.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
 	if len(conf.WhiteList) > 0 {
-		r.Use(handler.GetWhitelistHandler(conf))
+		r.Use(conf.GetWhitelistHandler())
 	}
 	r.HandleMethodNotAllowed = true
 	var store *persistence.InMemoryStore
@@ -77,7 +76,7 @@ func StartWithConfig(conf types.Configuration) error {
 			continue
 		}
 		for _, method := range route.AllowedMethods {
-			handlerFunction := handler.GetCoreHandler(conf, route, method)
+			handlerFunction := route.GetCoreHandler(conf, method)
 			if route.Cache > 0 {
 				if store == nil {
 					store = persistence.NewInMemoryStore(time.Minute)

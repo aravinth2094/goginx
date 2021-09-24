@@ -9,12 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aravinth2094/goginx/types"
 	"github.com/gin-gonic/gin"
 	roundrobin "github.com/hlts2/round-robin"
 )
 
-func GetCoreHandler(conf types.Configuration, route types.Route, method string) gin.HandlerFunc {
+func (route Route) GetCoreHandler(conf Configuration, method string) gin.HandlerFunc {
 	urls := make([]*url.URL, 0)
 	upstreams := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]
 	if len(upstreams) == 0 {
@@ -72,7 +71,7 @@ func GetCoreHandler(conf types.Configuration, route types.Route, method string) 
 	}
 }
 
-func GetWhitelistHandler(conf types.Configuration) gin.HandlerFunc {
+func (conf Configuration) GetWhitelistHandler() gin.HandlerFunc {
 	whiteList := make(map[string]bool)
 	for _, ip := range conf.WhiteList {
 		whiteList[ip] = true
@@ -87,7 +86,7 @@ func GetWhitelistHandler(conf types.Configuration) gin.HandlerFunc {
 	}
 }
 
-func GetLoggingHandler() gin.HandlerFunc {
+func (conf Configuration) GetLoggingHandler() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 
 		return fmt.Sprintf("%s - [%s] %s %s %s %d %s \"%s\" <%s>\n",

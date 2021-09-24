@@ -1,4 +1,4 @@
-package types
+package handler
 
 type CorsConfig struct {
 	Origin         string `json:"origin"`

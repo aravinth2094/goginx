@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/aravinth2094/goginx/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +24,7 @@ func addSecureHeaders(c *gin.Context) {
 	c.Writer.Header().Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
 }
 
-func addCorsHeaders(route types.Route, c *gin.Context) {
+func addCorsHeaders(route Route, c *gin.Context) {
 	if route.Cors.Origin != "" {
 		c.Writer.Header().Add("Access-Control-Allow-Origin", route.Cors.Origin)
 	}
