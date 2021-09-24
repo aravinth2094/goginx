@@ -22,7 +22,14 @@ or if you have ```goginx.json``` in the current directory
 ```shell
 goginx
 ```
-
+Help Menu
+```shell
+Usage of goginx:
+  -V    Validate configuration file
+  -c string
+        Goginx configuration file location (default "goginx.json")
+  -h    Print this help
+```
 Basic Sample goginx.json file
 ```json
 {

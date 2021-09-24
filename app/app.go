@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -21,10 +22,21 @@ import (
 
 func initialize() string {
 	configFileLocation := flag.String("c", "goginx.json", "Goginx configuration file location")
+	validate := flag.Bool("V", false, "Validate configuration file")
 	help := flag.Bool("h", false, "Print this help")
 	flag.Parse()
 	if *help {
 		flag.Usage()
+		os.Exit(0)
+	}
+	if *validate {
+		conf, err := getConfigurationFromFile(*configFileLocation)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if err := conf.Validate(); err != nil {
+			log.Fatalln(err)
+		}
 		os.Exit(0)
 	}
 	gin.SetMode(gin.ReleaseMode)
@@ -50,6 +62,9 @@ func getConfigurationFromFile(configurationFile string) (handler.Configuration, 
 }
 
 func StartWithConfig(conf handler.Configuration) error {
+	if err := conf.Validate(); err != nil {
+		return err
+	}
 	err := initLogFile(conf)
 	if err != nil {
 		return err

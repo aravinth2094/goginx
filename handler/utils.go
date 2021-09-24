@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -74,4 +77,42 @@ func cidrRangeContains(cidrRange string, checkIP string) bool {
 	}
 	ip := net.ParseIP(checkIP)
 	return network.Contains(ip)
+}
+
+func (conf Configuration) Validate() error {
+	if conf.Listen == "" {
+		return errors.New("listen address is not set")
+	}
+	if conf.Listen == ":0" {
+		return errors.New("listen address is not set")
+	}
+	if conf.Listen == ":80" && (conf.Certificate != "" || conf.Key != "") {
+		log.Println("WARNING: You are attempting to run HTTPS server on port 80. Port 443 is recommended.")
+	}
+	if conf.Listen == ":443" && (conf.Certificate == "" || conf.Key == "") {
+		return errors.New("certificate is not set")
+	}
+	if conf.Log == "" {
+		return errors.New("log file is not set")
+	}
+	if len(conf.Routes) == 0 {
+		return errors.New("no routes are set")
+	}
+	for _, route := range conf.Routes {
+		if !strings.Contains(route.ForwardUrl, ":") {
+			return fmt.Errorf("%s not a valid forwardUrl", route.ForwardUrl)
+		}
+		if len(route.AllowedMethods) == 0 && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "file" {
+			return fmt.Errorf("%s must contain atleast one allowedMethod", route.Path)
+		}
+		if route.ForwardUrl == "" {
+			return fmt.Errorf("%s must contain a forwardUrl", route.Path)
+		}
+		if route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "http" && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "file" && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "https" {
+			if _, ok := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]; !ok {
+				return fmt.Errorf("%s forwardUrl not in upstream", route.ForwardUrl)
+			}
+		}
+	}
+	return nil
 }
