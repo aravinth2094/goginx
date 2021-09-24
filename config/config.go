@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/aravinth2094/goginx/handler"
@@ -38,7 +37,6 @@ func ParseConfig(configFileLocation string) (handler.Configuration, error) {
 		Log:    "goginx.log",
 	}
 	file, err := readFile(configFileLocation)
-	log.Println("File: ", string(file))
 	if err != nil {
 		return handler.Configuration{}, err
 	}
