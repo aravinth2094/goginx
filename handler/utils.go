@@ -3,8 +3,11 @@ package handler
 import (
 	"net"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	roundrobin "github.com/hlts2/round-robin"
 )
 
 func checkAndSendError(c *gin.Context, err error) bool {
@@ -16,7 +19,7 @@ func checkAndSendError(c *gin.Context, err error) bool {
 	return false
 }
 
-func addSecureHeaders(c *gin.Context) {
+func (route Route) addSecureHeaders(c *gin.Context) {
 	c.Writer.Header().Add("X-Frame-Options", "DENY")
 	c.Writer.Header().Add("X-XSS-Protection", "1; mode=block")
 	c.Writer.Header().Add("X-Content-Type-Options", "nosniff")
@@ -24,7 +27,7 @@ func addSecureHeaders(c *gin.Context) {
 	c.Writer.Header().Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
 }
 
-func addCorsHeaders(route Route, c *gin.Context) {
+func (route Route) addCorsHeaders(c *gin.Context) {
 	if route.Cors.Origin != "" {
 		c.Writer.Header().Add("Access-Control-Allow-Origin", route.Cors.Origin)
 	}
@@ -46,6 +49,22 @@ func addCorsHeaders(route Route, c *gin.Context) {
 	if route.Cors.Vary != "" {
 		c.Writer.Header().Add("Access-Control-Allow-Vary", route.Cors.Vary)
 	}
+}
+
+func (conf Configuration) getLoadBalancer(route Route) (roundrobin.RoundRobin, error) {
+	urls := make([]*url.URL, 0)
+	upstreams := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]
+	if len(upstreams) == 0 {
+		urls = append(urls, &url.URL{
+			Host: route.ForwardUrl,
+		})
+	}
+	for _, upstream := range upstreams {
+		urls = append(urls, &url.URL{
+			Host: upstream + route.ForwardUrl[strings.Index(route.ForwardUrl, ":")+1:],
+		})
+	}
+	return roundrobin.New(urls...)
 }
 
 func cidrRangeContains(cidrRange string, checkIP string) bool {

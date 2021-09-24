@@ -5,28 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	roundrobin "github.com/hlts2/round-robin"
 )
 
 func (route Route) GetCoreHandler(conf Configuration, method string) gin.HandlerFunc {
-	urls := make([]*url.URL, 0)
-	upstreams := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]
-	if len(upstreams) == 0 {
-		urls = append(urls, &url.URL{
-			Host: route.ForwardUrl,
-		})
-	}
-	for _, upstream := range upstreams {
-		urls = append(urls, &url.URL{
-			Host: upstream + route.ForwardUrl[strings.Index(route.ForwardUrl, ":")+1:],
-		})
-	}
-	rr, _ := roundrobin.New(urls...)
+	rr, _ := conf.getLoadBalancer(route)
 	return func(c *gin.Context) {
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if checkAndSendError(c, err) {
@@ -48,9 +34,9 @@ func (route Route) GetCoreHandler(conf Configuration, method string) gin.Handler
 			proxyReq.Header.Add(h, val[0])
 		}
 		if route.SecureHeaders {
-			addSecureHeaders(c)
+			route.addSecureHeaders(c)
 		}
-		addCorsHeaders(route, c)
+		route.addCorsHeaders(c)
 		for h, val := range route.CustomHeaders {
 			proxyReq.Header.Add(h, val)
 		}

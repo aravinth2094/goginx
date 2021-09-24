@@ -3,7 +3,6 @@ package app
 import (
 	"flag"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -33,24 +32,28 @@ func initialize() string {
 	return *configFileLocation
 }
 
-func initLogFile(conf handler.Configuration) {
+func initLogFile(conf handler.Configuration) error {
 	logfile, err := os.OpenFile(conf.Log, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	gin.DefaultWriter = io.MultiWriter(logfile)
+	return nil
 }
 
-func getConfigurationFromFile(configurationFile string) handler.Configuration {
+func getConfigurationFromFile(configurationFile string) (handler.Configuration, error) {
 	conf, err := config.ParseConfig(configurationFile)
 	if err != nil {
-		log.Fatalf("Error parsing configuration file: %s", err)
+		return handler.Configuration{}, err
 	}
-	return conf
+	return conf, nil
 }
 
 func StartWithConfig(conf handler.Configuration) error {
-	initLogFile(conf)
+	err := initLogFile(conf)
+	if err != nil {
+		return err
+	}
 	r := gin.New()
 	logger, _ := zap.NewProduction()
 	r.Use(conf.GetLoggingHandler())
@@ -100,5 +103,9 @@ func StartWithConfig(conf handler.Configuration) error {
 }
 
 func Start() error {
-	return StartWithConfig(getConfigurationFromFile(initialize()))
+	conf, err := getConfigurationFromFile(initialize())
+	if err != nil {
+		return err
+	}
+	return StartWithConfig(conf)
 }
