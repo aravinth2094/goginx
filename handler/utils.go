@@ -83,14 +83,23 @@ func (conf Configuration) Validate() error {
 	if conf.Listen == "" {
 		return errors.New("listen address is not set")
 	}
-	if conf.Listen == ":0" {
-		return errors.New("listen address is not set")
+	host, port, err := net.SplitHostPort(conf.Listen)
+	if err != nil {
+		return err
 	}
-	if conf.Listen == ":80" && (conf.Certificate != "" || conf.Key != "") {
+	if host != "" && net.ParseIP(host) == nil {
+		if _, err := net.LookupHost(host); err != nil {
+			return err
+		}
+	}
+	if port == "0" || port == "" {
+		return errors.New("port invalid")
+	}
+	if port == "80" && (conf.Certificate != "" || conf.Key != "") {
 		log.Println("WARNING: You are attempting to run HTTPS server on port 80. Port 443 is recommended.")
 	}
-	if conf.Listen == ":443" && (conf.Certificate == "" || conf.Key == "") {
-		return errors.New("certificate is not set")
+	if port == "443" && (conf.Certificate == "" || conf.Key == "") {
+		log.Println("WARNING: You are attempting to run HTTP server on port 443. Port 80 is recommended.")
 	}
 	if conf.Log == "" {
 		return errors.New("log file is not set")
