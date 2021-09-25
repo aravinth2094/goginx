@@ -54,7 +54,7 @@ func (route Route) addCorsHeaders(c *gin.Context) {
 	}
 }
 
-func (conf Configuration) getLoadBalancer(route Route) (roundrobin.RoundRobin, error) {
+func (conf *Configuration) getLoadBalancer(route Route) (roundrobin.RoundRobin, error) {
 	urls := make([]*url.URL, 0)
 	upstreams := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]
 	if len(upstreams) == 0 {
@@ -79,7 +79,7 @@ func cidrRangeContains(cidrRange string, checkIP string) bool {
 	return network.Contains(ip)
 }
 
-func (conf Configuration) Validate() error {
+func (conf *Configuration) Validate() error {
 	if conf.Listen == "" {
 		return errors.New("listen address is not set")
 	}
@@ -108,14 +108,11 @@ func (conf Configuration) Validate() error {
 		return errors.New("no routes are set")
 	}
 	for _, route := range conf.Routes {
-		if !strings.Contains(route.ForwardUrl, ":") {
-			return fmt.Errorf("%s not a valid forwardUrl", route.ForwardUrl)
+		if route.ForwardUrl == "" || !strings.Contains(route.ForwardUrl, ":") {
+			return fmt.Errorf("%s invalid forwardUrl", route.Path)
 		}
 		if len(route.AllowedMethods) == 0 && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "file" {
 			return fmt.Errorf("%s must contain atleast one allowedMethod", route.Path)
-		}
-		if route.ForwardUrl == "" {
-			return fmt.Errorf("%s must contain a forwardUrl", route.Path)
 		}
 		if route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "http" && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "file" && route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")] != "https" {
 			if _, ok := conf.Upstreams[route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")]]; !ok {
