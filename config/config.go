@@ -31,18 +31,18 @@ func readFile(fileLocation string) ([]byte, error) {
 	return readFileFromLocal(fileLocation)
 }
 
-func ParseConfig(configFileLocation string) (handler.Configuration, error) {
-	conf := handler.Configuration{
+func ParseConfig(configFileLocation string) (*handler.Configuration, error) {
+	conf := &handler.Configuration{
 		Listen: ":80",
 		Log:    "goginx.log",
 	}
 	file, err := readFile(configFileLocation)
 	if err != nil {
-		return handler.Configuration{}, err
+		return nil, err
 	}
 	err = json.Unmarshal([]byte(file), &conf)
 	if err != nil {
-		return handler.Configuration{}, err
+		return nil, err
 	}
 	return conf, nil
 }

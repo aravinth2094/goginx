@@ -44,7 +44,7 @@ func initialize() string {
 	return *configFileLocation
 }
 
-func initLogFile(conf handler.Configuration) error {
+func initLogFile(conf *handler.Configuration) error {
 	logfile, err := os.OpenFile(conf.Log, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
@@ -53,15 +53,15 @@ func initLogFile(conf handler.Configuration) error {
 	return nil
 }
 
-func getConfigurationFromFile(configurationFile string) (handler.Configuration, error) {
+func getConfigurationFromFile(configurationFile string) (*handler.Configuration, error) {
 	conf, err := config.ParseConfig(configurationFile)
 	if err != nil {
-		return handler.Configuration{}, err
+		return nil, err
 	}
 	return conf, nil
 }
 
-func StartWithConfig(conf handler.Configuration) error {
+func StartWithConfig(conf *handler.Configuration) error {
 	if err := conf.Validate(); err != nil {
 		return err
 	}

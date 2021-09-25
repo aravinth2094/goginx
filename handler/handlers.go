@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (route Route) GetCoreHandler(conf Configuration, method string) gin.HandlerFunc {
+func (route Route) GetCoreHandler(conf *Configuration, method string) gin.HandlerFunc {
 	rr, _ := conf.getLoadBalancer(route)
 	return func(c *gin.Context) {
 		body, err := ioutil.ReadAll(c.Request.Body)
