@@ -1,3 +1,4 @@
+[![Actions Status](https://github.com/aravinth2094/goginx/workflows/Go%20Build/badge.svg)](https://github.com/aravinth2094/goginx/actions)
 # Goginx
 A simpler version of Nginx.
 
