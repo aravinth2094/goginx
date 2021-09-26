@@ -1,6 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: ""
-    directory: "/" # Location of package manifests
+  - directory: "/"
     schedule:
       interval: "daily"
