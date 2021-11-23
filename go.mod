@@ -7,7 +7,7 @@ require (
 	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-contrib/timeout v0.0.2
 	github.com/gin-contrib/zap v0.0.1
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.6
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hlts2/round-robin v0.0.0-20210825114102-ed603bc89ca0
