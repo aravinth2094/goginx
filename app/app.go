@@ -85,6 +85,12 @@ func StartWithConfig(conf *handler.Configuration) error {
 	if len(conf.WhiteList) > 0 {
 		r.Use(conf.GetWhitelistHandler())
 	}
+	var discoveryHandler gin.HandlerFunc
+	var discoveryService *handler.DiscoveryService
+	if conf.Discovery {
+		discoveryHandler, discoveryService = conf.GetDiscoveryHandler()
+		r.POST("/discovery", discoveryHandler)
+	}
 	r.HandleMethodNotAllowed = true
 	var store *persistence.InMemoryStore
 
@@ -94,7 +100,7 @@ func StartWithConfig(conf *handler.Configuration) error {
 			continue
 		}
 		for _, method := range route.AllowedMethods {
-			handlerFunction := route.GetCoreHandler(conf, method)
+			handlerFunction := route.GetCoreHandler(conf, method, discoveryService)
 			if route.Cache > 0 {
 				if store == nil {
 					store = persistence.NewInMemoryStore(time.Minute)

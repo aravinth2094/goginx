@@ -1,7 +1,21 @@
 [![Actions Status](https://github.com/aravinth2094/goginx/workflows/Go%20Build/badge.svg)](https://github.com/aravinth2094/goginx/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aravinth2094/goginx)](https://goreportcard.com/report/github.com/aravinth2094/goginx)
 # Goginx
-A simpler version of Nginx.
+A simpler version of Nginx, BUT MORE.
+
+## Features
+* Upstreams
+* Discovery Server (```POST /discovery { service, host, port }```)
+* Custom HTTP Headers
+* File Server
+* Whitelist
+* Compression
+* CORS
+* Secure HTTP Headers
+* Remote configuration file
+* Timeout
+* Cache
+* Logging
 
 ## Installation
 * Install golang
@@ -62,6 +76,7 @@ Advanced Sample goginx.json file
             "https://httpbin.org"
         ]
     },
+    "discovery" : true,
     "routes" : [
         {
             "path" : "/search",

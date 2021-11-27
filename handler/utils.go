@@ -119,6 +119,44 @@ func (conf *Configuration) Validate() error {
 				return fmt.Errorf("%s forwardUrl not in upstream", route.ForwardUrl)
 			}
 		}
+		if conf.Discovery && route.Path == "/discovery" {
+			return fmt.Errorf("%s is a reserved route", route.Path)
+		}
 	}
 	return nil
+}
+
+func (s *DiscoveryService) GetService(serviceName string) (*DiscoveryClient, error) {
+	if _, ok := s.services[serviceName]; !ok {
+		return nil, errors.New("service not found")
+	}
+	s.serviceCurrentIndex[serviceName] = (s.serviceCurrentIndex[serviceName] + 1) % len(s.services[serviceName])
+	service := s.services[serviceName][s.serviceCurrentIndex[serviceName]]
+	if !service.Active {
+		atLeastOneActive := false
+		for _, service := range s.services[serviceName] {
+			if service.Active {
+				atLeastOneActive = true
+				break
+			}
+		}
+		if !atLeastOneActive {
+			return nil, errors.New("no active service found")
+		}
+		return s.GetService(serviceName)
+	}
+	return &service, nil
+}
+
+func (s *DiscoveryService) AppendService(service *DiscoveryClient) {
+	if _, ok := s.services[service.Service]; !ok {
+		s.services[service.Service] = make([]DiscoveryClient, 0)
+	}
+	for _, client := range s.services[service.Service] {
+		if client.Host == service.Host && client.Port == service.Port {
+			client.Active = true
+			return
+		}
+	}
+	s.services[service.Service] = append(s.services[service.Service], *service)
 }

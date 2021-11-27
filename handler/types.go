@@ -32,4 +32,17 @@ type Configuration struct {
 	Compression bool                `json:"compression"`
 	Upstreams   map[string][]string `json:"upstreams"`
 	Routes      []Route             `json:"routes"`
+	Discovery   bool                `json:"discovery"`
+}
+
+type DiscoveryClient struct {
+	Service string `json:"service"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Active  bool
+}
+
+type DiscoveryService struct {
+	services            map[string][]DiscoveryClient
+	serviceCurrentIndex map[string]int
 }

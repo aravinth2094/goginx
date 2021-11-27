@@ -4,21 +4,35 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (route Route) GetCoreHandler(conf *Configuration, method string) gin.HandlerFunc {
+func (route Route) GetCoreHandler(conf *Configuration, method string, discoveryService *DiscoveryService) gin.HandlerFunc {
 	rr, _ := conf.getLoadBalancer(route)
+	ds := func() *DiscoveryClient {
+		client, _ := discoveryService.GetService(route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")])
+		return client
+	}
+	next := func() string {
+		if conf.Discovery {
+			host, port := ds().Host, ds().Port
+			return net.JoinHostPort(host, strconv.Itoa(port))
+		} else {
+			return rr.Next().Host
+		}
+	}
 	return func(c *gin.Context) {
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if checkAndSendError(c, err) {
 			return
 		}
-		url := strings.TrimRight(rr.Next().Host, "/")
+		url := strings.TrimRight(next(), "/")
 		if route.AppendPath {
 			url += c.Request.URL.Path
 		}
@@ -87,4 +101,29 @@ func (conf Configuration) GetLoggingHandler() gin.HandlerFunc {
 			param.ErrorMessage,
 		)
 	})
+}
+
+func (conf Configuration) GetDiscoveryHandler() (gin.HandlerFunc, *DiscoveryService) {
+	service := &DiscoveryService{}
+	return func(c *gin.Context) {
+		client := &DiscoveryClient{}
+		if err := c.Bind(&client); err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		if client.Service == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "service name is required"})
+			return
+		}
+		if client.Host == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "service host is required"})
+			return
+		}
+		if client.Port < 1 || client.Port > 65535 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "service port is invalid"})
+			return
+		}
+		client.Active = true
+		service.AppendService(client)
+	}, service
 }
