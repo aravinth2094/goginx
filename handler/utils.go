@@ -7,7 +7,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	roundrobin "github.com/hlts2/round-robin"
@@ -159,4 +161,30 @@ func (s *DiscoveryService) AppendService(service *DiscoveryClient) {
 		}
 	}
 	s.services[service.Service] = append(s.services[service.Service], *service)
+}
+
+func (s *DiscoveryService) HeartBeatServices() {
+	for {
+		for serviceName, serviceClients := range s.services {
+			for _, serviceClient := range serviceClients {
+				conn, err := net.DialTimeout("tcp", net.JoinHostPort(serviceClient.Service, strconv.Itoa(serviceClient.Port)), time.Second)
+				conn.Close()
+				serviceClient.Active = err == nil
+			}
+			s.services[serviceName] = serviceClients
+		}
+		<-time.After(time.Second * 60)
+	}
+}
+
+func (s *DiscoveryService) MarkInactive(client *DiscoveryClient) {
+	if _, ok := s.services[client.Service]; !ok {
+		return
+	}
+	for _, serviceClient := range s.services[client.Service] {
+		if serviceClient.Host == client.Host && serviceClient.Port == client.Port {
+			serviceClient.Active = false
+			return
+		}
+	}
 }

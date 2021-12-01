@@ -19,12 +19,13 @@ func (route Route) GetCoreHandler(conf *Configuration, method string, discoveryS
 		client, _ := discoveryService.GetService(route.ForwardUrl[0:strings.Index(route.ForwardUrl, ":")])
 		return client
 	}
-	next := func() string {
+	next := func() (*DiscoveryClient, string) {
 		if conf.Discovery {
-			host, port := ds().Host, ds().Port
-			return net.JoinHostPort(host, strconv.Itoa(port))
+			ds := ds()
+			host, port := ds.Host, ds.Port
+			return ds, net.JoinHostPort(host, strconv.Itoa(port))
 		} else {
-			return rr.Next().Host
+			return nil, rr.Next().Host
 		}
 	}
 	return func(c *gin.Context) {
@@ -32,7 +33,8 @@ func (route Route) GetCoreHandler(conf *Configuration, method string, discoveryS
 		if checkAndSendError(c, err) {
 			return
 		}
-		url := strings.TrimRight(next(), "/")
+		ds, host := next()
+		url := strings.TrimRight(host, "/")
 		if route.AppendPath {
 			url += c.Request.URL.Path
 		}
@@ -56,6 +58,9 @@ func (route Route) GetCoreHandler(conf *Configuration, method string, discoveryS
 		}
 		resp, err := http.DefaultClient.Do(proxyReq)
 		if checkAndSendError(c, err) {
+			if ds != nil {
+				discoveryService.MarkInactive(ds)
+			}
 			return
 		}
 
@@ -105,6 +110,7 @@ func (conf Configuration) GetLoggingHandler() gin.HandlerFunc {
 
 func (conf Configuration) GetDiscoveryHandler() (gin.HandlerFunc, *DiscoveryService) {
 	service := &DiscoveryService{}
+	go service.HeartBeatServices()
 	return func(c *gin.Context) {
 		client := &DiscoveryClient{}
 		if err := c.Bind(&client); err != nil {
