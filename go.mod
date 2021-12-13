@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/gin-contrib/cache v1.1.0
-	github.com/gin-contrib/gzip v0.0.3
+	github.com/gin-contrib/gzip v0.0.5
 	github.com/gin-contrib/timeout v0.0.2
 	github.com/gin-contrib/zap v0.0.1
 	github.com/gin-gonic/gin v1.7.4
